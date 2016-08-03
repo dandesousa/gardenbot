@@ -1,0 +1,12 @@
+language: python
+# supported python versions
+python:
+    - "3.5"
+
+# installation
+install:
+    - pip install -e .
+
+# testing
+script:
+    - python setup.py test
