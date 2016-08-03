@@ -27,6 +27,5 @@ class TestForecastIODataSource(unittest.TestCase):
     def test_historical_rainfall(self, *mocks):
         yesterday = date.today() - timedelta(days=1)
         location = Mock(latitude=44.0, longitude=44.0)
-        import pdb; pdb.set_trace()
         actual = self.data_source.get_rainfall(location, yesterday)
         self.assertIsNotNone(actual)
