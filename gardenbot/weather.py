@@ -3,6 +3,8 @@
 
 
 import requests
+import statistics
+from time import mktime
 from functools import lru_cache
 from datetime import date, timedelta
 
@@ -33,8 +35,11 @@ class WeatherInfo(object):
                 expected_rainfall += rainfall
         return expected_rainfall
 
-    def average_daily_temperature(self, location):
-        pass
+    def average_rolling_7_temperature(self, location):
+        # I know this isn't right, but maybe best we can do given API limits
+        window = (date.today() + timedelta(days=i) for i in range(-3, 4))
+        temps = [self._data_source.get_avg_temperature(location, day) for day in window]
+        return statistics.mean(temps)
 
 
 class DataSource(object):
@@ -43,7 +48,7 @@ class DataSource(object):
         """
         raise NotImplementedError
 
-    def get_temperature_range(self, location, d, **kwargs):
+    def get_avg_temperature(self, location, d, **kwargs):
         """Returns the temperature range for the locaiton on the date specified.
         """
         raise NotImplementedError
@@ -104,8 +109,32 @@ class ForecastIODataSource(object):
         accumulated_rainfall = sum(hr['precipIntensity'] for hr in hourly_data if hr.get('precipType') == 'rain')
         return accumulated_rainfall
 
+    def _get_historical_avg_temperature(self, location, d):
+        response = self._get_historical_data(location.latitude, location.longitude, d)
+        if response.status_code != 200:
+            return None
+        hourly_data = response.json()['hourly']['data']
+        return statistics.mean(hr['temperature'] for hr in hourly_data)
+
+    def _get_forecasted_avg_temperature(self, location, d):
+        response = self._get_forecast_data(location.latitude, location.longitude)
+        if response.status_code != 200:
+            return None
+        time = int(mktime(d.timetuple()))
+        daily_data = response.json()['daily']['data']
+        for day in daily_data:
+            if day['time'] == time:
+                return statistics.mean([day['temperatureMin'], day['temperatureMax']])
+        return None
+
     def get_rainfall(self, location, d):
         if d <= date.today():
             return self._get_historical_rainfall(location, d)
         else:
             return self._get_forecasted_rainfall(location)
+
+    def get_avg_temperature(self, location, d, **kwargs):
+        if d <= date.today():
+            return self._get_historical_avg_temperature(location, d)
+        else:
+            return self._get_forecasted_avg_temperature(location, d)
