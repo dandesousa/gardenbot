@@ -4,7 +4,7 @@
 
 import requests
 from functools import lru_cache
-from datetime import date, datetime
+from datetime import date, timedelta
 
 
 class WeatherInfo(object):
@@ -12,13 +12,28 @@ class WeatherInfo(object):
 
     Has attributes for relevant weather metrics over the configured interval.
     """
-    def accumulated_rainfall_3_day(self):
-        pass
+    def __init__(self, data_source):
+        self._data_source = data_source
 
-    def expected_rainfall_4_day(self):
-        pass
+    def accumulated_rainfall_3_day(self, location):
+        accumulated_rainfall = 0
+        for i in range(1, 4):
+            day = date.today() - timedelta(days=i)
+            rainfall = self._data_source.get_rainfall(location, day)
+            if rainfall is not None:
+                accumulated_rainfall += rainfall
+        return accumulated_rainfall
 
-    def average_daily_temperature(self):
+    def expected_rainfall_4_day(self, location):
+        expected_rainfall = 0
+        for i in range(0, 4):
+            day = date.today() + timedelta(days=i)
+            rainfall = self._data_source.get_rainfall(location, day)
+            if rainfall is not None:
+                expected_rainfall += rainfall
+        return expected_rainfall
+
+    def average_daily_temperature(self, location):
         pass
 
 
@@ -35,38 +50,42 @@ class DataSource(object):
 
 
 class ForecastIODataSource(object):
-    base_url = "https://api.forecast.io"
+    base_url = "https://api.forecast.io/"
     forecast_url_template = base_url + "forecast/{apikey}/{latitude},{longitude}"
     time_machine_url_template = forecast_url_template + ",{time}"
-    time_format_str = "%Y-%m-%d%H:%M:%S"
+    time_format_str = "%Y-%m-%dT%H:%M:%S"
     cache_size = 512
 
     def __init__(self, api_key):
         self._api_key = api_key
 
-    def _url_with_qargs(self, url_template, location, d=None, query_params={}):
-        time = d.strftime(self.time_format_str)
-        url = url_template.format(apikey=self._api_key, latitude=location.latitude, longitude=location.longitude, time=time)
+    def _url_with_qargs(self, url_template, lat, lon, d=None, query_params={}):
+        if d:
+            time = d.strftime(self.time_format_str)
+            url = url_template.format(apikey=self._api_key, latitude=lat, longitude=lon, time=time)
+        else:
+            url = url_template.format(apikey=self._api_key, latitude=lat, longitude=lon)
+
         if query_params:
             url += "?" + "&".join("{}={}".format(key, value) for key, value in query_params.items())
         return url
 
     @lru_cache(maxsize=cache_size)
-    def _get_historical_data(self, location, d):
+    def _get_historical_data(self, lat, lon, d):
         # TODO: set excludes for more efficient requests
         query_params = dict(exclude="[]")
-        url = self._url_with_qargs(self.time_machine_url_template, location, d, query_params)
+        url = self._url_with_qargs(self.time_machine_url_template, lat, lon, d, query_params)
         return requests.get(url)
 
     @lru_cache(maxsize=cache_size)
-    def _get_forecast_data(self, location):
+    def _get_forecast_data(self, lat, lon):
         # TODO: set excludes for more efficient requests
         query_params = dict(exclude="[]")
-        url = self._url_with_qargs(self.forecast_url_template, location, query_params=query_params)
+        url = self._url_with_qargs(self.forecast_url_template, lat, lon, query_params=query_params)
         return requests.get(url)
 
     def _get_historical_rainfall(self, location, d):
-        response = self._get_historical_data(location, d)
+        response = self._get_historical_data(location.latitude, location.longitude, d)
         if response.status_code != 200:
             return None
 
@@ -75,7 +94,7 @@ class ForecastIODataSource(object):
         return accumulated_rainfall
 
     def _get_forecasted_rainfall(self, location):
-        response = self._get_forecast_data(location)
+        response = self._get_forecast_data(location.latitude, location.longitude)
         if response.status_code != 200:
             return None
 
