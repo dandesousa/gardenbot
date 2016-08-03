@@ -5,7 +5,7 @@ python:
 
 # installation
 install:
-    - pip install -e .
+    - pip setup.py install --force
 
 # testing
 script:
