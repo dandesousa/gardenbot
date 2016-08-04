@@ -71,7 +71,7 @@ Here are a list of commands I respond to:
         """
         response = "Not sure what you mean. Type `@{}: help` for more information.".format(self.name)
         for keyword, func in self._commands.items():
-            if command.startswith(keyword):
+            if command.startswith(keyword + " ") or command == keyword:
                 response = func(command)
         self.client.api_call("chat.postMessage", channel=channel, text=response, as_user=True)
 

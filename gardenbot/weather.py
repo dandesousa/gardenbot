@@ -27,19 +27,15 @@ class WeatherInfo(object):
         return accumulated_rainfall
 
     def expected_rainfall_4_day(self, location):
-        expected_rainfall = 0
-        for i in range(0, 4):
-            day = date.today() + timedelta(days=i)
-            rainfall = self._data_source.get_rainfall(location, day)
-            if rainfall is not None:
-                expected_rainfall += rainfall
+        # gets all forecasted rainfall for today and going forward
+        expected_rainfall = self._data_source.get_rainfall(location, date.today())
         return expected_rainfall
 
     def average_rolling_7_temperature(self, location):
         # I know this isn't right, but maybe best we can do given API limits
         window = (date.today() + timedelta(days=i) for i in range(-3, 4))
         temps = [self._data_source.get_avg_temperature(location, day) for day in window]
-        return statistics.mean(temps)
+        return statistics.mean([temp for temp in temps if temp is not None])
 
 
 class DataSource(object):
@@ -133,6 +129,7 @@ class ForecastIODataSource(object):
         else:
             return self._get_forecasted_rainfall(location)
 
+    # TODO: known bug here -- with time zones and incorrectly finding forcasted date.
     def get_avg_temperature(self, location, d, **kwargs):
         if d <= date.today():
             return self._get_historical_avg_temperature(location, d)
