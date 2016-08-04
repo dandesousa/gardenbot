@@ -11,7 +11,10 @@ if sys.argv[-1] == 'publish':
 
 
 with open("requirements.txt") as req_file:
-    requires = [req for req in req_file]
+    install_requires = [req for req in req_file]
+
+with open("requirements-slack.txt") as req_file:
+    slack_requires = [req for req in req_file]
 
 
 setup(
@@ -28,9 +31,13 @@ setup(
     packages=find_packages(exclude=["tests"]),
     package_data={'': ['LICENSE']},
     include_package_data=True,
-    install_requires=requires,
+    install_requires=install_requires,
+    extras_require={
+        'slack': slack_requires
+    },
     zip_safe=False,
-    entry_points={'console_scripts': ['gardenbot = gardenbot.command:main']},
+    entry_points={'console_scripts': ['gardenbot = gardenbot.command:main',
+                                      'gardenbot-slack = gardenbot.slack.command:main']},
     classifiers=[
         'Development Status :: 4 - Beta',
         'Programming Language :: Python :: 3.3',

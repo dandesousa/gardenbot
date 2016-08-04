@@ -1,0 +1,17 @@
+{% macro inch_format(inches) -%}{{"{0:0.2f}\"".format(inches)}}{%- endmacro %}
+{% macro temp_format(temp) -%}{{"{0:0.1f}F".format(info.average_temperature)}}{%- endmacro %}
+{% macro date_range_format(start, end) -%}{{"{} through {}".format(start.isoformat(), end.isoformat())}}{%- endmacro %}
+
+Watering Tips For *{{info.location}}*:
+
+This week ({{date_range_format(info.start_date, info.end_date)}}), your garden needs at least *{{inch_format(info.minimum_watering_requirements)}}* of liquid water. Rainfall should provide *{{inch_format(info.total_rainfall)}}*. You are responsible for providing the additional *{{inch_format(info.required_external_water_inches)}}*.
+
+*Watering Requirements*
+:droplet: Additional Water Required: *{{inch_format(info.required_external_water_inches)}}*
+:rain_cloud: Total Rainfall: *{{inch_format(info.total_rainfall)}}*
+
+*Weather Breakdown*
+{{date_range_format(info.start_date, info.end_date)}}
+:rain_cloud: :check_mark: 3-day Accumulated Rainfall: *{{inch_format(info.accumulated_rainfall)}}*
+:rain_cloud: :question: 4-day Expected Rainfall: *{{inch_format(info.expected_rainfall)}}*
+:thermometer: 7-day Avg Temperature: *{{temp_format(info.average_temperature)}}* (+{{inch_format(info.temperature_triggered_water_adjustment)}})
