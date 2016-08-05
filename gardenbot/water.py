@@ -62,4 +62,4 @@ class WaterInfo(object):
     @property
     def required_external_water_inches(self):
         """Amount of water you need to add, in inches."""
-        return self.minimum_watering_requirements - self.accumulated_rainfall - self.expected_rainfall
+        return max(0, self.minimum_watering_requirements - self.accumulated_rainfall - self.expected_rainfall)
