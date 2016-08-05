@@ -6,6 +6,10 @@ Watering Tips For *{{info.location}}*:
 
 This week ({{date_range_format(info.start_date, info.end_date)}}), your garden needs at least *{{inch_format(info.minimum_watering_requirements)}}* of liquid water. Rainfall should provide *{{inch_format(info.total_rainfall)}}*. You are responsible for providing the additional *{{inch_format(info.required_external_water_inches)}}*.
 
+{% if irrigation_info %}
+Since you have a {{irrigation_info.sqft}} sqft garden, you should run your irrigation system for {{"{0:0.1f}".format(irrigation_info.minutes_to_irrigate(info.required_external_water_inches))}} minutes.
+{% endif %}
+
 *Watering Requirements*
 :droplet: Additional Water Required: *{{inch_format(info.required_external_water_inches)}}*
 :rain_cloud: Total Rainfall: *{{inch_format(info.total_rainfall)}}*

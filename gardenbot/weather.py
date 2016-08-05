@@ -102,7 +102,7 @@ class ForecastIODataSource(object):
         hourly_data = response.json()['hourly']['data']
         # can we make a more accurate prediction than the best case?
         # we need to look more than two days in the future
-        accumulated_rainfall = sum(hr['precipIntensity'] for hr in hourly_data if hr.get('precipType') == 'rain')
+        accumulated_rainfall = sum(hr.get('precipIntensity', 0) for hr in hourly_data if hr.get('precipType') == 'rain')
         return accumulated_rainfall
 
     def _get_historical_avg_temperature(self, location, d):
