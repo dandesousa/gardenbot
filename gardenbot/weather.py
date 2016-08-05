@@ -91,7 +91,7 @@ class ForecastIODataSource(object):
             return None
 
         hourly_data = response.json()['hourly']['data']
-        accumulated_rainfall = sum(hr['precipIntensity'] for hr in hourly_data if hr.get('precipType') == 'rain')
+        accumulated_rainfall = sum(hr.get('precipIntensity', 0) for hr in hourly_data if hr.get('precipType') == 'rain')
         return accumulated_rainfall
 
     def _get_forecasted_rainfall(self, location):
